@@ -3,10 +3,11 @@
 
 import { SlideTemplate } from "./templates";
 import { getKeywordsForProfile, KeywordBank } from "./keywords";
+import { ChartData } from "./chartEngine";
 
 export interface SlideData {
   id: string;
-  type: 'title' | 'content' | 'two-column' | 'stats' | 'quote' | 'timeline' | 'team' | 'closing' | 'section-break' | 'comparison' | 'process';
+  type: 'title' | 'content' | 'two-column' | 'stats' | 'quote' | 'timeline' | 'team' | 'closing' | 'section-break' | 'comparison' | 'process' | 'chart';
   title: string;
   subtitle?: string;
   content?: string;
@@ -17,6 +18,7 @@ export interface SlideData {
   quote?: { text: string; author: string };
   steps?: { title: string; description: string }[];
   notes?: string;
+  chart?: ChartData;
 }
 
 export interface PresentationData {

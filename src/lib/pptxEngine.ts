@@ -5,6 +5,7 @@ import PptxGenJS from "pptxgenjs";
 import { SlideData, PresentationData } from "./slideGenerator";
 import { getTemplateById, SlideTemplate } from "./templates";
 import { getBoldKeywordsForSlide } from "./keywords";
+import { ChartData, CHART_COLORS } from "./chartEngine";
 
 interface TextSegment {
   text: string;
@@ -84,6 +85,9 @@ function applySlideContent(
       break;
     case "quote":
       renderQuoteSlide(slide, data, template, presentation);
+      break;
+    case "chart":
+      renderChartSlide(slide, data, template, presentation);
       break;
     default:
       renderContentSlide(slide, data, template, presentation);
@@ -503,6 +507,72 @@ function renderQuoteSlide(
       color: colors.textLight, align: "center",
     });
   }
+}
+
+function renderChartSlide(
+  slide: PptxGenJS.Slide,
+  data: SlideData,
+  template: SlideTemplate,
+  presentation: PresentationData
+) {
+  const colors = template.colors;
+
+  slide.addShape("rect", { x: 0, y: 0, w: "100%", h: "100%", fill: { color: colors.background } });
+  slide.addShape("rect", { x: 0, y: 0, w: "100%", h: 1.1, fill: { color: colors.primary } });
+  slide.addShape("rect", { x: 0, y: 1.1, w: "100%", h: 0.05, fill: { color: colors.accent } });
+
+  slide.addText(data.title, {
+    x: 0.8, y: 0.15, w: 11.73, h: 0.8,
+    fontSize: 24, fontFace: template.fonts.heading,
+    color: "#FFFFFF", bold: true, align: "left", valign: "middle",
+  });
+
+  if (data.chart) {
+    const chart = data.chart;
+    const chartColors = chart.datasets.map((ds, i) =>
+      ds.color || CHART_COLORS[i % CHART_COLORS.length]
+    );
+
+    // Map chart type to PptxGenJS chart type
+    const pptxChartTypeMap: Record<string, any> = {
+      bar: "bar",
+      line: "line",
+      pie: "pie",
+      doughnut: "doughnut",
+      area: "area",
+    };
+
+    const chartType = pptxChartTypeMap[chart.type] || "bar";
+
+    try {
+      const chartData = chart.datasets.map((ds, i) => ({
+        name: ds.label,
+        labels: chart.labels,
+        values: ds.values,
+      }));
+
+      slide.addChart(chartType, chartData, {
+        x: 1.0, y: 1.5, w: 11.33, h: 5.5,
+        showLegend: chart.datasets.length > 1,
+        legendPos: "b",
+        legendFontSize: 10,
+        showTitle: false,
+        chartColors: chartColors.map(c => c.replace("#", "")),
+        valAxisLabelFontSize: 10,
+        catAxisLabelFontSize: 10,
+        dataLabelFontSize: 9,
+      } as any);
+    } catch {
+      // Fallback: render as text if chart fails
+      slide.addText(`[${chart.type.toUpperCase()} CHART: ${chart.title}]`, {
+        x: 1.0, y: 3.0, w: 11.33, h: 2.0,
+        fontSize: 18, fontFace: template.fonts.body,
+        color: colors.textLight, align: "center", valign: "middle",
+      });
+    }
+  }
+
+  addPageNumber(slide, template);
 }
 
 // Build text segments with bold keywords highlighted

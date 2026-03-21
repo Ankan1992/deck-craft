@@ -4,6 +4,7 @@ import React from "react";
 import { SlideData, PresentationData } from "@/lib/slideGenerator";
 import { getTemplateById, SlideTemplate } from "@/lib/templates";
 import { getBoldKeywordsForSlide } from "@/lib/keywords";
+import { ChartData, CHART_COLORS } from "@/lib/chartEngine";
 
 interface SlidePreviewProps {
   slide: SlideData;
@@ -223,6 +224,19 @@ export default function SlidePreview({
           </div>
         );
 
+      case "chart":
+        return (
+          <div className="w-full h-full flex flex-col" style={{ backgroundColor: colors.background }}>
+            <div style={{ backgroundColor: colors.primary, padding: `${12 * scale}px ${20 * scale}px`, minHeight: `${50 * scale}px`, display: 'flex', alignItems: 'center' }}>
+              <h2 style={{ fontSize: `${24 * scale}px`, fontWeight: 700, color: '#FFFFFF', fontFamily: template.fonts.heading }}>{slide.title}</h2>
+            </div>
+            <div style={{ height: `${2 * scale}px`, backgroundColor: colors.accent }} />
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: `${16 * scale}px` }}>
+              {slide.chart && renderChartPreview(slide.chart, scale, colors)}
+            </div>
+          </div>
+        );
+
       default:
         return (
           <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: colors.background }}>
@@ -231,6 +245,140 @@ export default function SlidePreview({
         );
     }
   };
+
+  // Render an SVG chart preview
+  function renderChartPreview(chart: ChartData, scale: number, colors: any) {
+    const w = 800 * scale;
+    const h = 340 * scale;
+    const padding = 40 * scale;
+
+    if (chart.type === "pie" || chart.type === "doughnut") {
+      return renderPieChart(chart, w, h, scale);
+    }
+    return renderBarLineChart(chart, w, h, padding, scale, colors);
+  }
+
+  function renderPieChart(chart: ChartData, w: number, h: number, scale: number) {
+    const cx = w / 2;
+    const cy = h / 2;
+    const r = Math.min(w, h) * 0.35;
+    const innerR = chart.type === "doughnut" ? r * 0.55 : 0;
+    const values = chart.datasets[0]?.values || [];
+    const total = values.reduce((a, b) => a + b, 0);
+
+    let currentAngle = -Math.PI / 2;
+    const slices = values.map((v, i) => {
+      const angle = (v / total) * 2 * Math.PI;
+      const startAngle = currentAngle;
+      const endAngle = currentAngle + angle;
+      currentAngle = endAngle;
+
+      const x1 = cx + r * Math.cos(startAngle);
+      const y1 = cy + r * Math.sin(startAngle);
+      const x2 = cx + r * Math.cos(endAngle);
+      const y2 = cy + r * Math.sin(endAngle);
+      const ix1 = cx + innerR * Math.cos(startAngle);
+      const iy1 = cy + innerR * Math.sin(startAngle);
+      const ix2 = cx + innerR * Math.cos(endAngle);
+      const iy2 = cy + innerR * Math.sin(endAngle);
+      const largeArc = angle > Math.PI ? 1 : 0;
+
+      const d = innerR > 0
+        ? `M ${ix1} ${iy1} L ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} L ${ix2} ${iy2} A ${innerR} ${innerR} 0 ${largeArc} 0 ${ix1} ${iy1} Z`
+        : `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} Z`;
+
+      return (
+        <path key={i} d={d} fill={chart.datasets[0]?.color || CHART_COLORS[i % CHART_COLORS.length]} opacity={0.85} />
+      );
+    });
+
+    // Legend
+    const legend = chart.labels.map((label, i) => (
+      <g key={`legend-${i}`} transform={`translate(${w - 120 * scale}, ${30 * scale + i * 18 * scale})`}>
+        <rect width={10 * scale} height={10 * scale} fill={CHART_COLORS[i % CHART_COLORS.length]} rx={2} />
+        <text x={14 * scale} y={9 * scale} fontSize={9 * scale} fill={isDark ? colors.text : "#333"}>{label}</text>
+      </g>
+    ));
+
+    return (
+      <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`}>
+        {slices}
+        {legend}
+      </svg>
+    );
+  }
+
+  function renderBarLineChart(chart: ChartData, w: number, h: number, padding: number, scale: number, colors: any) {
+    const chartW = w - padding * 2;
+    const chartH = h - padding * 2;
+    const labels = chart.labels;
+    const barWidth = chartW / labels.length * 0.6;
+    const gap = chartW / labels.length;
+
+    const allValues = chart.datasets.flatMap(d => d.values);
+    const maxVal = Math.max(...allValues, 1);
+
+    return (
+      <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`}>
+        {/* Grid lines */}
+        {[0, 0.25, 0.5, 0.75, 1].map((pct, i) => (
+          <line key={`grid-${i}`} x1={padding} x2={w - padding} y1={padding + chartH * (1 - pct)} y2={padding + chartH * (1 - pct)} stroke={isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.08)"} strokeWidth={1} />
+        ))}
+
+        {/* Bars or Lines */}
+        {chart.datasets.map((ds, dsIdx) => {
+          const color = ds.color || CHART_COLORS[dsIdx % CHART_COLORS.length];
+
+          if (chart.type === "bar") {
+            const offsetX = chart.datasets.length > 1 ? (dsIdx - (chart.datasets.length - 1) / 2) * (barWidth / chart.datasets.length + 2) : 0;
+            return ds.values.map((v, i) => {
+              const barH = (v / maxVal) * chartH;
+              const x = padding + gap * i + gap / 2 - barWidth / 2 + offsetX;
+              const y = padding + chartH - barH;
+              return (
+                <rect key={`bar-${dsIdx}-${i}`} x={x} y={y} width={barWidth / Math.max(chart.datasets.length, 1)} height={barH} fill={color} rx={2 * scale} opacity={0.85} />
+              );
+            });
+          } else {
+            // Line or area
+            const points = ds.values.map((v, i) => {
+              const x = padding + gap * i + gap / 2;
+              const y = padding + chartH - (v / maxVal) * chartH;
+              return { x, y };
+            });
+            const linePath = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+
+            return (
+              <g key={`line-${dsIdx}`}>
+                {chart.type === "area" && (
+                  <path d={`${linePath} L ${points[points.length - 1].x} ${padding + chartH} L ${points[0].x} ${padding + chartH} Z`} fill={color} opacity={0.15} />
+                )}
+                <path d={linePath} fill="none" stroke={color} strokeWidth={2.5 * scale} strokeLinecap="round" strokeLinejoin="round" />
+                {points.map((p, i) => (
+                  <circle key={`dot-${dsIdx}-${i}`} cx={p.x} cy={p.y} r={3 * scale} fill={color} />
+                ))}
+              </g>
+            );
+          }
+        })}
+
+        {/* X-axis labels */}
+        {labels.map((label, i) => (
+          <text key={`xlabel-${i}`} x={padding + gap * i + gap / 2} y={h - 5 * scale} textAnchor="middle" fontSize={9 * scale} fill={isDark ? colors.textLight : "#666"}>
+            {label}
+          </text>
+        ))}
+
+        {/* Legend */}
+        {chart.datasets.length > 1 && chart.datasets.map((ds, i) => (
+          <g key={`legend-${i}`} transform={`translate(${padding + i * 100 * scale}, ${8 * scale})`}>
+            <rect width={10 * scale} height={10 * scale} fill={ds.color || CHART_COLORS[i]} rx={2} />
+            <text x={14 * scale} y={9 * scale} fontSize={8 * scale} fill={isDark ? colors.text : "#333"}>{ds.label}</text>
+          </g>
+        ))}
+      </svg>
+    );
+  }
 
   return (
     <div
