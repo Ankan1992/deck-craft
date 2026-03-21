@@ -138,7 +138,7 @@ function renderTitleSlide(
   });
 
   // Confidential tag for IB/Consulting
-  if (['investment_banking', 'consulting'].includes(presentation.profile)) {
+  if (['investment_banking', 'consulting', 'board'].includes(presentation.profile)) {
     slide.addText("CONFIDENTIAL", {
       x: 8.0, y: 5.5, w: 4.33, h: 0.5,
       fontSize: 10, fontFace: template.fonts.body,

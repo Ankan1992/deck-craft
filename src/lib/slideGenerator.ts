@@ -41,7 +41,8 @@ export function detectProfile(input: string): string {
   const lower = input.toLowerCase();
   const profileScores: Record<string, number> = {
     consulting: 0, tech: 0, business: 0, vc_pitch: 0,
-    investment_banking: 0, academic: 0, product: 0, generic: 0,
+    investment_banking: 0, academic: 0, product: 0,
+    board: 0, aop: 0, generic: 0,
   };
 
   // Consulting signals
@@ -67,6 +68,16 @@ export function detectProfile(input: string): string {
   // Product signals
   if (/product|feature|launch|roadmap|sprint|user research|ux |ui |design system/i.test(lower)) profileScores.product += 5;
   if (/mvp|a\/b test|persona|user story|backlog|okr/i.test(lower)) profileScores.product += 3;
+
+  // Board signals
+  if (/board of directors|board meeting|board deck|board presentation|board review|governance/i.test(lower)) profileScores.board += 5;
+  if (/fiduciary|shareholder|board approval|quarterly review|board resolution|dividend|buyback/i.test(lower)) profileScores.board += 3;
+  if (/board report|directors meeting|oversight|audit committee|compensation committee/i.test(lower)) profileScores.board += 3;
+
+  // AOP signals
+  if (/annual operating plan|aop|annual plan|operating plan|annual budget/i.test(lower)) profileScores.aop += 5;
+  if (/budget|headcount plan|departmental plan|scenario planning|revenue target|expense budget/i.test(lower)) profileScores.aop += 3;
+  if (/plan vs actual|variance|kpi scorecard|quarterly milestone|functional plan|fiscal year/i.test(lower)) profileScores.aop += 3;
 
   // Business signals
   if (/business|revenue|roi|market share|quarterly|annual report|corporate|executive/i.test(lower)) profileScores.business += 5;
@@ -124,6 +135,8 @@ function extractTitle(prompt: string, profile: string): string {
     investment_banking: "Transaction Overview",
     academic: "Research Presentation",
     product: "Product Strategy & Roadmap",
+    board: "Board of Directors Meeting",
+    aop: "Annual Operating Plan",
     generic: "Professional Presentation",
   };
   return titles[profile] || titles.generic;
@@ -138,6 +151,8 @@ function generateSubtitle(profile: string, bank: KeywordBank): string {
     investment_banking: "Confidential Discussion Materials",
     academic: "A Comprehensive Research Analysis",
     product: "Delivering Exceptional User Experiences",
+    board: "Quarterly Business Review & Strategic Update",
+    aop: "Strategic Priorities, Revenue Targets & Execution Roadmap",
     generic: "A Professional Overview",
   };
   return subtitles[profile] || subtitles.generic;
@@ -238,6 +253,8 @@ function getDefaultTopics(profile: string): string[] {
     investment_banking: ['market', 'financials', 'competition', 'strategy', 'results'],
     academic: ['problem', 'process', 'results', 'case_study'],
     product: ['problem', 'solution', 'product', 'traction', 'roadmap'],
+    board: ['board_executive_summary', 'board_financial_performance', 'board_strategic_update', 'board_risk', 'board_decisions'],
+    aop: ['aop_executive_summary', 'aop_prior_year', 'aop_revenue_plan', 'aop_expense_budget', 'aop_departmental', 'aop_kpi_scorecard', 'aop_scenario', 'aop_milestones'],
     generic: ['vision', 'strategy', 'results', 'roadmap'],
   };
   return defaults[profile] || defaults.generic;
@@ -426,9 +443,204 @@ function generateSlideForTopic(topic: string, profile: string, bank: KeywordBank
         enrichWithKeywords("Generated $5M+ in annual savings while improving customer satisfaction", bank),
       ],
     }),
+
+    // ========== BOARD OF DIRECTORS SLIDES ==========
+    board_executive_summary: () => ({
+      id: genId(),
+      type: 'content',
+      title: 'Executive Summary: Q1 Performance Exceeded Guidance',
+      bullets: [
+        enrichWithKeywords("Revenue grew 14% YoY to $128M, surpassing Board-approved guidance of $120M", bank),
+        enrichWithKeywords("EBITDA margin expanded 220bps to 28.5%, driven by operational efficiency gains", bank),
+        enrichWithKeywords("Customer retention held at 94% with NPS improving to 72 (top quartile)", bank),
+        enrichWithKeywords("Cash position remains strong at $45M with 18 months of runway at current burn rate", bank),
+        enrichWithKeywords("Management recommends accelerating APAC expansion based on pipeline traction", bank),
+      ],
+    }),
+    board_financial_performance: () => ({
+      id: genId(),
+      type: 'stats',
+      title: 'Financial Performance: All Key Metrics Above Plan',
+      stats: [
+        { label: 'Revenue', value: '$128M', description: '+14% YoY, +7% vs Plan' },
+        { label: 'EBITDA Margin', value: '28.5%', description: '+220bps vs prior year' },
+        { label: 'Cash Position', value: '$45M', description: '18-month runway' },
+      ],
+    }),
+    board_strategic_update: () => ({
+      id: genId(),
+      type: 'two-column',
+      title: 'Strategic Priorities: On Track Across All Pillars',
+      leftColumn: {
+        title: 'Delivered This Quarter',
+        bullets: [
+          enrichWithKeywords("Completed enterprise platform migration ahead of schedule", bank),
+          enrichWithKeywords("Secured three strategic partnerships in target verticals", bank),
+          enrichWithKeywords("Launched AI-powered analytics module to first 50 customers", bank),
+        ],
+      },
+      rightColumn: {
+        title: 'Next Quarter Focus',
+        bullets: [
+          enrichWithKeywords("Scale APAC go-to-market with regional leadership hires", bank),
+          enrichWithKeywords("Expand gross margin through infrastructure optimization", bank),
+          enrichWithKeywords("Complete compliance certification for regulated industries", bank),
+        ],
+      },
+    }),
+    board_risk: () => ({
+      id: genId(),
+      type: 'two-column',
+      title: 'Risk Assessment: Two Key Risks Identified with Mitigation Plans',
+      leftColumn: {
+        title: 'Key Risks',
+        bullets: [
+          enrichWithKeywords("Regulatory changes in EU market may impact Q3 revenue forecast", bank),
+          enrichWithKeywords("Talent competition in engineering increasing acquisition cost 15%", bank),
+          enrichWithKeywords("Supply chain delays could affect hardware deployment timeline", bank),
+        ],
+      },
+      rightColumn: {
+        title: 'Mitigation Actions',
+        bullets: [
+          enrichWithKeywords("Legal team engaged; compliance roadmap approved and funded", bank),
+          enrichWithKeywords("Retention packages deployed; offshore engineering hub on track", bank),
+          enrichWithKeywords("Dual-supplier strategy activated; buffer stock secured through Q4", bank),
+        ],
+      },
+    }),
+    board_decisions: () => ({
+      id: genId(),
+      type: 'content',
+      title: 'Board Approval Requested: Three Resolutions',
+      bullets: [
+        enrichWithKeywords("Resolution 1: Approve $8M capital allocation for APAC market expansion", bank),
+        enrichWithKeywords("Resolution 2: Ratify revised compensation framework for executive leadership", bank),
+        enrichWithKeywords("Resolution 3: Authorize management to explore strategic M&A targets up to $25M", bank),
+        enrichWithKeywords("All resolutions include detailed financial analysis in the appendix", bank),
+      ],
+    }),
+
+    // ========== ANNUAL OPERATING PLAN (AOP) SLIDES ==========
+    aop_executive_summary: () => ({
+      id: genId(),
+      type: 'content',
+      title: 'AOP Executive Summary: Path to $200M Revenue',
+      bullets: [
+        enrichWithKeywords("Annual revenue target of $200M represents 35% YoY growth aligned to three-year strategic plan", bank),
+        enrichWithKeywords("Total expense budget of $155M maintains 22.5% operating margin while funding key initiatives", bank),
+        enrichWithKeywords("Headcount plan adds 85 FTEs across Sales, Engineering, and Customer Success", bank),
+        enrichWithKeywords("Five strategic initiatives prioritized with clear owners, quarterly milestones, and KPI scorecards", bank),
+        enrichWithKeywords("Scenario analysis prepared for base, best, and worst case with trigger points defined", bank),
+      ],
+    }),
+    aop_prior_year: () => ({
+      id: genId(),
+      type: 'two-column',
+      title: 'Prior Year Review: Strong Execution, Key Lessons Learned',
+      leftColumn: {
+        title: 'What Worked',
+        bullets: [
+          enrichWithKeywords("Product-led growth drove 40% of new revenue at lowest CAC", bank),
+          enrichWithKeywords("Enterprise segment exceeded target by 18% through strategic partnerships", bank),
+          enrichWithKeywords("Engineering velocity improved 30% after platform modernization", bank),
+        ],
+      },
+      rightColumn: {
+        title: 'Lessons & Adjustments',
+        bullets: [
+          enrichWithKeywords("Mid-market segment underperformed — adjusting ICP and sales motion", bank),
+          enrichWithKeywords("Hiring timeline slipped 6 weeks — recruiting capacity doubled for this year", bank),
+          enrichWithKeywords("International launch delayed — localization now front-loaded in Q1", bank),
+        ],
+      },
+    }),
+    aop_revenue_plan: () => ({
+      id: genId(),
+      type: 'stats',
+      title: 'Revenue Plan: $200M Target with Diversified Growth Engines',
+      stats: [
+        { label: 'Total Revenue Target', value: '$200M', description: '+35% YoY | $148M prior year' },
+        { label: 'New Business', value: '$72M', description: '36% of total | +45% growth' },
+        { label: 'Expansion & Renewal', value: '$128M', description: '64% of total | Net retention 115%' },
+      ],
+    }),
+    aop_expense_budget: () => ({
+      id: genId(),
+      type: 'stats',
+      title: 'Expense Budget & P&L: Balanced Investment and Profitability',
+      stats: [
+        { label: 'Total OpEx', value: '$155M', description: '77.5% of revenue' },
+        { label: 'R&D Investment', value: '$52M', description: '26% of revenue | +20 engineers' },
+        { label: 'Operating Margin', value: '22.5%', description: '+180bps vs prior year' },
+      ],
+    }),
+    aop_departmental: () => ({
+      id: genId(),
+      type: 'two-column',
+      title: 'Departmental Plans: Aligned to Top Five Strategic Objectives',
+      leftColumn: {
+        title: 'Revenue Functions',
+        bullets: [
+          enrichWithKeywords("Sales: $72M new ARR target, 15 new enterprise reps, 3 regional offices", bank),
+          enrichWithKeywords("Marketing: $18M budget, 50K MQLs, brand awareness +25% in target segments", bank),
+          enrichWithKeywords("Customer Success: Net retention 115%, NPS target 75, 8 new CSMs", bank),
+        ],
+      },
+      rightColumn: {
+        title: 'Product & Operations',
+        bullets: [
+          enrichWithKeywords("Engineering: Platform v3.0 launch Q2, API marketplace Q3, 20 new hires", bank),
+          enrichWithKeywords("Product: 4 major releases, AI features GA, mobile app beta by Q4", bank),
+          enrichWithKeywords("Operations: SOC 2 Type II, 99.95% uptime SLA, infrastructure cost -12%", bank),
+        ],
+      },
+    }),
+    aop_kpi_scorecard: () => ({
+      id: genId(),
+      type: 'stats',
+      title: 'KPI Scorecard: North Star Metrics Reviewed Monthly',
+      stats: [
+        { label: 'ARR Growth', value: '35%', description: 'Target: $200M | Monthly tracking' },
+        { label: 'Net Retention', value: '115%', description: 'Expansion + renewal health' },
+        { label: 'CAC Payback', value: '14 mo', description: 'Down from 18 months prior year' },
+      ],
+    }),
+    aop_scenario: () => ({
+      id: genId(),
+      type: 'two-column',
+      title: 'Scenario Planning: Prepared for Multiple Outcomes',
+      leftColumn: {
+        title: 'Base Case ($200M)',
+        bullets: [
+          enrichWithKeywords("Current pipeline converts at historical 25% rate", bank),
+          enrichWithKeywords("Hiring plan fully executed by end of Q2", bank),
+          enrichWithKeywords("No major competitive disruption in core markets", bank),
+        ],
+      },
+      rightColumn: {
+        title: 'Downside Case ($170M)',
+        bullets: [
+          enrichWithKeywords("Pipeline conversion drops to 18% — trigger: reduce discretionary spend $8M", bank),
+          enrichWithKeywords("Hiring freeze at Q2 levels — trigger: 2 consecutive months below 80% quota", bank),
+          enrichWithKeywords("Market contraction — trigger: pivot to retention and expansion playbook", bank),
+        ],
+      },
+    }),
+    aop_milestones: () => ({
+      id: genId(),
+      type: 'process',
+      title: 'Quarterly Milestones: Clear Deliverables with Owners',
+      steps: [
+        { title: 'Q1: Foundation', description: enrichWithKeywords('Complete hiring wave 1 (40 FTEs). Launch APAC market. Finalize platform v3.0 architecture.', bank) },
+        { title: 'Q2: Acceleration', description: enrichWithKeywords('Platform v3.0 GA release. Hit $50M ARR run rate. Close 5 enterprise lighthouse accounts.', bank) },
+        { title: 'Q3: Scale', description: enrichWithKeywords('API marketplace launch. International revenue at 20% of total. SOC 2 certification complete.', bank) },
+        { title: 'Q4: Optimize', description: enrichWithKeywords('Mobile app beta. Operating margin target 22.5% achieved. Board strategic review for Year +1.', bank) },
+      ],
+    }),
   };
 
-  return slideMap[topic]?.() || slideMap.strategy!();
+  return slideMap[topic]?.() || slideMap.strategy?.() || slideMap.vision!();
 }
 
 function generateStandardDeck(profile: string, bank: KeywordBank, prompt: string): SlideData[] {
@@ -455,6 +667,8 @@ function getClosingTitle(profile: string): string {
     investment_banking: "Summary & Recommendations",
     academic: "Conclusions & Future Research",
     product: "What's Next",
+    board: "Resolutions & Next Steps",
+    aop: "Execution Begins — Q1 Kickoff",
     generic: "Thank You",
   };
   return titles[profile] || titles.generic;
@@ -469,6 +683,8 @@ function getClosingSubtitle(profile: string): string {
     investment_banking: "We look forward to your feedback",
     academic: "Thank you for your attention",
     product: "Shipping the future of user experience",
+    board: "Management requests Board feedback and approval on resolutions presented",
+    aop: "Monthly KPI review cadence begins January — first leadership check-in Jan 31",
     generic: "Questions & Discussion",
   };
   return subtitles[profile] || subtitles.generic;

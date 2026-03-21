@@ -471,6 +471,67 @@ export const TEMPLATES: SlideTemplate[] = [
     ],
     thumbnailGradient: "from-indigo-500 via-purple-500 to-pink-500",
   },
+
+  // 16. Board of Directors
+  {
+    id: "board-presentation",
+    name: "Board of Directors",
+    description: "Authoritative, minimalist deck for board meetings. Lead with conclusions, one message per slide, action-title format. Fortune 500 / PE governance style.",
+    category: "board",
+    tags: ["board", "directors", "governance", "executive", "corporate", "quarterly review", "board meeting"],
+    colors: {
+      primary: "#003153",
+      secondary: "#005EB8",
+      accent: "#F3C13A",
+      background: "#F5F5F5",
+      text: "#222222",
+      textLight: "#A2AAAD",
+      highlight: "#003153",
+      gradient: ["#003153", "#005EB8"],
+    },
+    fonts: { heading: "Montserrat", body: "Open Sans", accent: "Open Sans" },
+    slideTypes: [
+      { type: "title", layout: "board-formal" },
+      { type: "content", layout: "action-title-body" },
+      { type: "stats", layout: "board-kpi-dashboard" },
+      { type: "two-column", layout: "risk-mitigation" },
+      { type: "process", layout: "strategic-priorities" },
+      { type: "comparison", layout: "quarter-over-quarter" },
+      { type: "closing", layout: "decisions-needed" },
+    ],
+    thumbnailGradient: "from-blue-950 to-blue-800",
+  },
+
+  // 17. Annual Operating Plan (AOP)
+  {
+    id: "aop-plan",
+    name: "Annual Operating Plan",
+    description: "Data-rich, structured AOP template for annual planning. Revenue targets, expense budgets, departmental plans, KPI scorecards, and scenario analysis. Built for C-suite and leadership.",
+    category: "aop",
+    tags: ["aop", "annual plan", "operating plan", "budget", "planning", "kpi", "scorecard", "annual review"],
+    colors: {
+      primary: "#1B3A5C",
+      secondary: "#0097A7",
+      accent: "#F3C13A",
+      background: "#FFFFFF",
+      text: "#2D2D2D",
+      textLight: "#9E9E9E",
+      highlight: "#1B3A5C",
+      gradient: ["#1B3A5C", "#0097A7"],
+    },
+    fonts: { heading: "Montserrat", body: "Calibri", accent: "Calibri" },
+    slideTypes: [
+      { type: "title", layout: "aop-title" },
+      { type: "content", layout: "executive-summary" },
+      { type: "stats", layout: "revenue-targets" },
+      { type: "two-column", layout: "plan-vs-actual" },
+      { type: "process", layout: "quarterly-milestones" },
+      { type: "comparison", layout: "scenario-analysis" },
+      { type: "stats", layout: "kpi-scorecard" },
+      { type: "closing", layout: "next-steps-owners" },
+    ],
+    thumbnailGradient: "from-slate-800 to-teal-700",
+  },
 ];
 
 export function getTemplatesForCategory(category: string): SlideTemplate[] {
@@ -486,11 +547,13 @@ export function getRecommendedTemplates(profile: string): SlideTemplate[] {
   const categoryMap: Record<string, string[]> = {
     consulting: ["consulting", "corporate", "strategy"],
     tech: ["tech", "modern", "developer", "saas"],
-    business: ["business", "corporate", "professional", "executive"],
+    business: ["business", "corporate", "professional", "executive", "board", "aop"],
     vc_pitch: ["vc_pitch", "startup", "pitch", "funding"],
     investment_banking: ["investment_banking", "finance", "formal"],
     academic: ["academic", "research", "scholarly"],
     product: ["product", "launch", "demo"],
+    board: ["board", "governance", "executive", "corporate"],
+    aop: ["aop", "annual plan", "budget", "planning", "business"],
     generic: ["generic", "minimal", "clean"],
   };
 

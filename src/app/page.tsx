@@ -23,6 +23,8 @@ const PROFILES = [
   { id: "business", label: "Business", icon: "📈", desc: "Corporate & strategy" },
   { id: "vc_pitch", label: "VC Pitch", icon: "🚀", desc: "Fundraising & investor decks" },
   { id: "investment_banking", label: "Investment Banking", icon: "🏦", desc: "M&A, IPO, advisory" },
+  { id: "board", label: "Board Meeting", icon: "🏛️", desc: "Board of Directors governance" },
+  { id: "aop", label: "Annual Plan (AOP)", icon: "📅", desc: "Annual operating plan & budget" },
   { id: "academic", label: "Academic", icon: "🎓", desc: "Research & scholarly" },
   { id: "product", label: "Product", icon: "🎯", desc: "Product management & launches" },
   { id: "generic", label: "General", icon: "✨", desc: "Clean, versatile design" },
@@ -208,7 +210,7 @@ export default function HomePage() {
             {/* Badge */}
             <div className="inline-flex items-center gap-2 px-4 py-2 glass-card text-sm text-dark-300 mb-8 animate-fade-in">
               <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-              15 Professional Templates • 8 Industry Profiles • Instant PPTX Export
+              17 Professional Templates • 10 Industry Profiles • Instant PPTX Export
             </div>
 
             <h1 className="text-5xl md:text-7xl font-extrabold font-display leading-tight mb-6 animate-slide-up">
@@ -240,7 +242,7 @@ export default function HomePage() {
               {[
                 { icon: "💬", title: "Chat to Create", desc: "Describe your presentation in plain language and get professional slides instantly" },
                 { icon: "📁", title: "Upload Anything", desc: "Excel, Word, PPT, CSV, Google Docs — we parse and transform your content" },
-                { icon: "🎨", title: "15+ Templates", desc: "Industry-specific designs for consulting, tech, VC, banking, academic & more" },
+                { icon: "🎨", title: "17+ Templates", desc: "Industry-specific designs for consulting, tech, VC, banking, academic & more" },
               ].map((f, i) => (
                 <div key={i} className="glass-card-hover p-6 text-left animate-slide-up" style={{ animationDelay: `${i * 100}ms` }}>
                   <span className="text-3xl mb-3 block">{f.icon}</span>
@@ -279,7 +281,7 @@ export default function HomePage() {
               Professional designs inspired by the world's best presentations — McKinsey, YC, Google, and more.
             </p>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-              {TEMPLATES.slice(0, 10).map((t) => (
+              {TEMPLATES.map((t) => (
                 <div key={t.id} className="glass-card-hover overflow-hidden group">
                   <div className={`h-24 bg-gradient-to-br ${t.thumbnailGradient} flex items-center justify-center`}>
                     <span className="text-white/80 text-xs font-bold uppercase tracking-wider group-hover:scale-110 transition-transform">{t.name}</span>
@@ -384,7 +386,7 @@ export default function HomePage() {
           <div className="p-5 border-b border-white/5">
             <h3 className="text-xs font-semibold text-dark-400 uppercase tracking-wider mb-3">Keyword Emphasis</h3>
             <div className="flex gap-2">
-              {["tech", "business", "consulting", "generic"].map(mode => (
+              {["tech", "business", "consulting", "board", "aop", "generic"].map(mode => (
                 <button
                   key={mode}
                   onClick={() => setKeywordMode(mode)}
@@ -490,9 +492,11 @@ export default function HomePage() {
                     { text: "Create a VC pitch deck for a SaaS startup", profile: "vc_pitch" },
                     { text: "Build a McKinsey-style consulting strategy deck", profile: "consulting" },
                     { text: "Design a technical architecture review presentation", profile: "tech" },
-                    { text: "Make a quarterly business review for the board", profile: "business" },
+                    { text: "Create a Board of Directors quarterly review deck", profile: "board" },
+                    { text: "Build an Annual Operating Plan (AOP) for FY2026", profile: "aop" },
                     { text: "Create an investment banking M&A pitch book", profile: "investment_banking" },
                     { text: "Build a product launch announcement deck", profile: "product" },
+                    { text: "Make a quarterly business review for leadership", profile: "business" },
                   ].map((prompt, i) => (
                     <button
                       key={i}
