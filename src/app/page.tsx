@@ -14,6 +14,8 @@ import { generatePptx } from "@/lib/pptxEngine";
 import { parseUploadedFile } from "@/lib/fileParser";
 import SlidePreview from "@/components/SlidePreview";
 import SlideEditor from "@/components/SlideEditor";
+import ColorSchemePicker from "@/components/ColorSchemePicker";
+import { TemplateColors } from "@/lib/templates";
 
 type AppStep = "landing" | "configure" | "preview";
 
@@ -45,6 +47,7 @@ export default function HomePage() {
   const [isDownloading, setIsDownloading] = useState(false);
   const [templateFilter, setTemplateFilter] = useState("all");
   const [chatMessages, setChatMessages] = useState<{ role: string; text: string }[]>([]);
+  const [customColors, setCustomColors] = useState<TemplateColors | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
@@ -174,7 +177,11 @@ export default function HomePage() {
   };
 
   // Get template for current presentation
-  const currentTemplate = TEMPLATES.find(t => t.id === (presentation?.templateId || selectedTemplate)) || TEMPLATES[0];
+  // Resolve active template — apply custom color override if set
+  const baseTemplate = TEMPLATES.find(t => t.id === (presentation?.templateId || selectedTemplate)) || TEMPLATES[0];
+  const currentTemplate = customColors
+    ? { ...baseTemplate, colors: { ...baseTemplate.colors, ...customColors }, thumbnailGradient: baseTemplate.thumbnailGradient }
+    : baseTemplate;
 
   // Filtered templates
   const filteredTemplates = templateFilter === "recommended"
@@ -401,6 +408,25 @@ export default function HomePage() {
               ))}
             </div>
           </div>
+
+          {/* Custom Color Scheme */}
+          <ColorSchemePicker
+            onApply={(colors) => {
+              setCustomColors(colors);
+              setChatMessages(prev => [
+                ...prev,
+                { role: "system", text: `✓ Custom color palette applied! Primary: ${colors.primary}, Accent: ${colors.accent}. These colors will override the selected template.` },
+              ]);
+            }}
+            onClear={() => {
+              setCustomColors(null);
+              setChatMessages(prev => [
+                ...prev,
+                { role: "system", text: "Custom color palette removed. Using template's default colors." },
+              ]);
+            }}
+            activeCustomColors={customColors}
+          />
 
           {/* Template Selection */}
           <div className="p-5 flex-1 overflow-y-auto">
