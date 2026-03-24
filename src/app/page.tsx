@@ -191,8 +191,22 @@ export default function HomePage() {
   const handleGenerate = async () => {
     setIsGenerating(true);
 
+    // Include current chat input even if not yet submitted
+    const pendingInput = chatInput.trim();
+    if (pendingInput) {
+      setChatMessages(prev => [...prev, { role: "user", text: pendingInput }]);
+      // Auto-detect profile from pending input
+      const detectedProfile = detectProfile(pendingInput);
+      if (detectedProfile !== "generic" && profile === "generic") {
+        setProfile(detectedProfile);
+        setKeywordMode(detectedProfile);
+      }
+      setChatInput("");
+    }
+
     const fullInput = [
       ...chatMessages.filter(m => m.role === "user").map(m => m.text),
+      pendingInput,
       uploadedContent,
     ].join("\n\n");
 
@@ -615,7 +629,7 @@ export default function HomePage() {
                     <button
                       key={i}
                       onClick={() => {
-                        setChatInput(prompt.text);
+                        setChatMessages(prev => [...prev, { role: "user", text: prompt.text }]);
                         setProfile(prompt.profile);
                         setKeywordMode(prompt.profile);
                       }}
