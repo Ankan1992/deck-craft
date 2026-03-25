@@ -58,6 +58,11 @@ export default function HomePage() {
   const chatEndRef = useRef<HTMLDivElement>(null);
   const previewChatEndRef = useRef<HTMLDivElement>(null);
 
+  // Scroll to top on step change
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [step]);
+
   // Auto-scroll chat
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -144,7 +149,7 @@ export default function HomePage() {
     setIsDiscovering(false);
   };
 
-  // Handle file upload
+  // Handle file upload — parse and auto-generate presentation
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -153,10 +158,30 @@ export default function HomePage() {
       const parsed = await parseUploadedFile(file);
       setUploadedContent(parsed.text);
       setUploadedFileName(file.name);
+
+      // Auto-detect profile from file content
+      const detectedProfile = detectProfile(parsed.text);
+      if (detectedProfile !== "generic") {
+        setProfile(detectedProfile);
+        setKeywordMode(detectedProfile);
+      }
+
       setChatMessages(prev => [
         ...prev,
         { role: "user", text: `📎 Uploaded: ${file.name}` },
-        { role: "system", text: `File parsed successfully! Extracted ${parsed.text.length} characters from your ${parsed.type}. You can now generate a presentation from this content, or add more context via chat.` },
+        { role: "system", text: `File parsed successfully! Extracted ${parsed.text.length} characters from your ${parsed.type}${parsed.metadata?.slideCount ? ` (${parsed.metadata.slideCount} slides)` : ''}. Auto-generating presentation...` },
+      ]);
+
+      // Auto-generate presentation from uploaded file
+      const activeProfile = detectedProfile !== "generic" ? detectedProfile : profile;
+      const data = generateSlidesFromPrompt(parsed.text, activeProfile, selectedTemplate);
+      data.profile = activeProfile;
+      setPresentation(data);
+      setActiveSlideIndex(0);
+      setStep("preview");
+      setChatMessages(prev => [
+        ...prev,
+        { role: "system", text: `Presentation generated with ${data.slides.length} slides! You can now preview, edit, and refine using the chat panel.` },
       ]);
     } catch (error) {
       setChatMessages(prev => [
@@ -164,6 +189,9 @@ export default function HomePage() {
         { role: "system", text: "Error parsing file. Please try a different format (.xlsx, .docx, .csv, .txt, .pptx)" },
       ]);
     }
+
+    // Reset file input so the same file can be re-uploaded
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   // Handle chat submit
@@ -457,9 +485,9 @@ export default function HomePage() {
   // Configure Page — Chat + Settings
   if (step === "configure") {
     return (
-      <div className="min-h-screen bg-dark-950 flex">
+      <div className="h-screen bg-dark-950 flex overflow-hidden">
         {/* Left Sidebar — Settings */}
-        <div className="w-80 border-r border-white/5 bg-dark-900/50 flex flex-col overflow-y-auto">
+        <div className="w-80 border-r border-white/5 bg-dark-900/50 flex flex-col overflow-y-auto shrink-0">
           {/* Logo */}
           <div className="p-5 border-b border-white/5">
             <button onClick={() => setStep("landing")} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
@@ -573,7 +601,7 @@ export default function HomePage() {
         </div>
 
         {/* Main Chat Area */}
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
           {/* Top Bar */}
           <div className="h-14 border-b border-white/5 bg-dark-900/30 flex items-center justify-between px-6">
             <div className="flex items-center gap-4">

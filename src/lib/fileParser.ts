@@ -110,22 +110,39 @@ async function parseText(file: File): Promise<ParsedFileContent> {
 }
 
 async function parsePptx(file: File): Promise<ParsedFileContent> {
-  // Basic PPTX parsing - extract text from XML
   try {
     const JSZip = (await import('jszip')).default;
     const buffer = await file.arrayBuffer();
     const zip = await JSZip.loadAsync(buffer);
 
     let allText = '';
-    const slideFiles = Object.keys(zip.files).filter(name => name.match(/ppt\/slides\/slide\d+\.xml/));
+    const sections: { title: string; content: string }[] = [];
+    const slideFiles = Object.keys(zip.files)
+      .filter(name => name.match(/ppt\/slides\/slide\d+\.xml/))
+      .sort((a, b) => {
+        const numA = parseInt(a.match(/slide(\d+)/)?.[1] || '0');
+        const numB = parseInt(b.match(/slide(\d+)/)?.[1] || '0');
+        return numA - numB;
+      });
 
-    for (const slidePath of slideFiles.sort()) {
+    for (let idx = 0; idx < slideFiles.length; idx++) {
+      const slidePath = slideFiles[idx];
       const content = await zip.files[slidePath].async('text');
-      // Extract text from XML
+
+      // Extract all text runs from XML
       const textMatches = content.match(/<a:t>([^<]+)<\/a:t>/g);
       if (textMatches) {
-        const slideText = textMatches.map(m => m.replace(/<\/?a:t>/g, '')).join(' ');
-        allText += `\n${slideText}\n`;
+        const texts = textMatches.map(m => m.replace(/<\/?a:t>/g, '').trim()).filter(t => t.length > 0);
+        if (texts.length > 0) {
+          // First text is usually the slide title
+          const slideTitle = texts[0];
+          const slideBody = texts.slice(1).join('\n');
+          sections.push({
+            title: `Slide ${idx + 1}: ${slideTitle}`,
+            content: slideBody || slideTitle,
+          });
+          allText += `\n--- Slide ${idx + 1}: ${slideTitle} ---\n${slideBody}\n`;
+        }
       }
     }
 
@@ -133,6 +150,7 @@ async function parsePptx(file: File): Promise<ParsedFileContent> {
       text: allText.trim() || 'No text content extracted from presentation',
       type: 'presentation',
       metadata: { fileName: file.name, slideCount: String(slideFiles.length) },
+      sections,
     };
   } catch {
     return {
