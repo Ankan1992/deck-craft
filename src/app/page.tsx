@@ -194,7 +194,7 @@ export default function HomePage() {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  // Handle chat submit
+  // Handle chat submit — adds message AND auto-generates presentation
   const handleChatSubmit = () => {
     if (!chatInput.trim()) return;
 
@@ -203,16 +203,39 @@ export default function HomePage() {
 
     // Auto-detect profile from input
     const detectedProfile = detectProfile(userMessage);
+    const activeProfile = (detectedProfile !== "generic") ? detectedProfile : profile;
     if (detectedProfile !== "generic" && profile === "generic") {
       setProfile(detectedProfile);
       setKeywordMode(detectedProfile);
-      setChatMessages(prev => [
-        ...prev,
-        { role: "system", text: `Detected a ${detectedProfile.replace('_', ' ')} context. Template recommendations updated! You can change this in settings.` },
-      ]);
     }
 
     setChatInput("");
+
+    // Auto-generate presentation immediately
+    try {
+      const fullInput = [
+        ...chatMessages.filter(m => m.role === "user").map(m => m.text),
+        userMessage,
+        uploadedContent,
+      ].join("\n\n");
+
+      if (fullInput.trim()) {
+        const data = generateSlidesFromPrompt(fullInput, activeProfile, selectedTemplate);
+        data.profile = activeProfile;
+        setPresentation(data);
+        setActiveSlideIndex(0);
+        setStep("preview");
+        setChatMessages(prev => [
+          ...prev,
+          { role: "system", text: `Presentation generated with ${data.slides.length} slides using the ${TEMPLATES.find(t => t.id === selectedTemplate)?.name} template!` },
+        ]);
+      }
+    } catch (error) {
+      setChatMessages(prev => [
+        ...prev,
+        { role: "system", text: "Error generating presentation. Please try again or click 'Generate Presentation'." },
+      ]);
+    }
   };
 
   // Generate presentation
@@ -660,6 +683,28 @@ export default function HomePage() {
                         setChatMessages(prev => [...prev, { role: "user", text: prompt.text }]);
                         setProfile(prompt.profile);
                         setKeywordMode(prompt.profile);
+                        // Auto-generate presentation from quick prompt
+                        try {
+                          const fullInput = [
+                            ...chatMessages.filter(m => m.role === "user").map(m => m.text),
+                            prompt.text,
+                            uploadedContent,
+                          ].join("\n\n");
+                          const data = generateSlidesFromPrompt(fullInput, prompt.profile, selectedTemplate);
+                          data.profile = prompt.profile;
+                          setPresentation(data);
+                          setActiveSlideIndex(0);
+                          setStep("preview");
+                          setChatMessages(prev => [
+                            ...prev,
+                            { role: "system", text: `Presentation generated with ${data.slides.length} slides! You can now preview, edit, and refine.` },
+                          ]);
+                        } catch {
+                          setChatMessages(prev => [
+                            ...prev,
+                            { role: "system", text: "Click 'Generate Presentation' to create your deck." },
+                          ]);
+                        }
                       }}
                       className="glass-card-hover p-3 text-left text-sm text-dark-300 hover:text-white transition-colors"
                     >
@@ -918,6 +963,18 @@ export default function HomePage() {
         {editingSlide && (
           <SlideEditor slide={editingSlide} onUpdate={handleSlideUpdate} onClose={() => setEditingSlide(null)} />
         )}
+      </div>
+    );
+  }
+
+  // Fallback — if we're on preview but no presentation, go back to configure
+  if (step === "preview" && !presentation) {
+    return (
+      <div className="min-h-screen bg-dark-950 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-dark-400 mb-4">No presentation data found.</p>
+          <button onClick={() => setStep("configure")} className="btn-primary">Go Back & Create</button>
+        </div>
       </div>
     );
   }

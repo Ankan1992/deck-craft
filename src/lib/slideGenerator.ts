@@ -110,6 +110,12 @@ export function generateSlidesFromPrompt(
   // Parse slide content from prompt
   const slides = parsePromptToSlides(prompt, profile, keywordBank);
 
+  // Replace title slide placeholders with actual values
+  if (slides.length > 0 && slides[0].type === 'title') {
+    if (slides[0].title === '{TITLE}') slides[0].title = title;
+    if (slides[0].subtitle === '{SUBTITLE}') slides[0].subtitle = subtitle;
+  }
+
   return {
     title,
     subtitle,
